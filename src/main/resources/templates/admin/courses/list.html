@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(title='Courses')}"></head>
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 2rem 0 1rem;">
+            <h1>Course Management</h1>
+            <a th:href="@{/admin/courses/new}" class="btn btn-primary">Create New Course</a>
+        </div>
+        
+        <div th:replace="~{layout :: alerts}"></div>
+        
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Indexed</th>
+                        <th>Enrolled Students</th>
+                        <th>Created By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="course : ${courses}">
+                        <td th:text="${course.title}">Course Title</td>
+                        <td>
+                            <span th:if="${course.published}" class="badge badge-success">Published</span>
+                            <span th:unless="${course.published}" class="badge badge-warning">Draft</span>
+                        </td>
+                        <td>
+                            <span th:if="${course.indexed}" class="badge badge-success">✓</span>
+                            <span th:unless="${course.indexed}" class="badge badge-danger">✗</span>
+                        </td>
+                        <td th:text="${course.enrolledStudents.size()}">0</td>
+                        <td th:text="${course.createdBy.fullName}">Admin</td>
+                        <td>
+                            <a th:href="@{/admin/courses/{id}(id=${course.id})}" class="btn btn-secondary">View</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div th:if="${courses.isEmpty()}" style="text-align: center; padding: 2rem; color: #6b7280;">
+                No courses yet. Create your first course to get started!
+            </div>
+        </div>
+    </div>
+</body>
+</html>

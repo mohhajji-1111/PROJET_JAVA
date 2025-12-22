@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(title='Course Details')}"></head>
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    
+    <div class="container">
+        <h1 style="margin: 2rem 0 1rem;" th:text="${course.title}">Course Title</h1>
+        
+        <div th:replace="~{layout :: alerts}"></div>
+        
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                    <span th:if="${course.published}" class="badge badge-success">Published</span>
+                    <span th:unless="${course.published}" class="badge badge-warning">Draft</span>
+                    <span th:if="${course.indexed}" class="badge badge-info">RAG Indexed</span>
+                </div>
+                
+                <div style="display: flex; gap: 0.5rem;">
+                    <a th:href="@{/admin/courses/{id}/edit(id=${course.id})}" class="btn btn-primary">Edit</a>
+                    
+                    <form th:if="${!course.published}" th:action="@{/admin/courses/{id}/publish(id=${course.id})}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-success">Publish</button>
+                    </form>
+                    
+                    <form th:if="${course.published}" th:action="@{/admin/courses/{id}/unpublish(id=${course.id})}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-warning">Unpublish</button>
+                    </form>
+                    
+                    <form th:if="${course.published and !course.indexed}" th:action="@{/admin/courses/{id}/index(id=${course.id})}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-info">Index for RAG</button>
+                    </form>
+                    
+                    <form th:action="@{/admin/courses/{id}/delete(id=${course.id})}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this course?');">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+            
+            <p><strong>Description:</strong></p>
+            <p th:text="${course.description ?: 'No description'}">Course description</p>
+            
+            <p style="margin-top: 1rem;"><strong>Created by:</strong> <span th:text="${course.createdBy.fullName}"></span></p>
+            <p><strong>Created at:</strong> <span th:text="${#temporals.format(course.createdAt, 'yyyy-MM-dd HH:mm')}"></span></p>
+            
+            <hr style="margin: 2rem 0;">
+            
+            <h3>Course Content</h3>
+            <div style="background: #f9fafb; padding: 1.5rem; border-radius: 4px; margin-top: 1rem; white-space: pre-wrap;" th:text="${course.content}">
+                Course content...
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Enrolled Students (<span th:text="${course.enrolledStudents.size()}">0</span>)</h2>
+            
+            <div th:if="${!unenrolledStudents.isEmpty()}" style="margin: 1rem 0;">
+                <h3>Enroll Student</h3>
+                <form th:action="@{/admin/courses/{courseId}/enroll/{studentId}(courseId=${course.id})}" method="post" style="display: flex; gap: 1rem; align-items: flex-end;">
+                    <div class="form-group" style="flex: 1; margin: 0;">
+                        <select name="studentId" class="form-control" required>
+                            <option value="">Select student...</option>
+                            <option th:each="student : ${unenrolledStudents}" 
+                                    th:value="${student.id}" 
+                                    th:text="${student.fullName + ' (' + student.username + ')'}">
+                                Student Name
+                            </option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success">Enroll</button>
+                </form>
+            </div>
+            
+            <table th:if="${!course.enrolledStudents.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="student : ${course.enrolledStudents}">
+                        <td th:text="${student.fullName}">Student Name</td>
+                        <td th:text="${student.username}">username</td>
+                        <td th:text="${student.email}">email@example.com</td>
+                        <td>
+                            <form th:action="@{/admin/courses/{courseId}/unenroll/{studentId}(courseId=${course.id},studentId=${student.id})}" 
+                                  method="post" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Are you sure you want to unenroll this student?');">
+                                <button type="submit" class="btn btn-danger">Unenroll</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div th:if="${course.enrolledStudents.isEmpty()}" style="text-align: center; padding: 2rem; color: #6b7280;">
+                No students enrolled yet.
+            </div>
+        </div>
+        
+        <a th:href="@{/admin/courses}" class="btn btn-secondary" style="margin: 1rem 0;">Back to Courses</a>
+    </div>
+</body>
+</html>

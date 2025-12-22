@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(title='Students')}"></head>
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 2rem 0 1rem;">
+            <h1>Student Management</h1>
+            <a th:href="@{/admin/students/new}" class="btn btn-primary">Add New Student</a>
+        </div>
+        
+        <div th:replace="~{layout :: alerts}"></div>
+        
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Enrolled Courses</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="student : ${students}">
+                        <td th:text="${student.fullName}">Student Name</td>
+                        <td th:text="${student.username}">username</td>
+                        <td th:text="${student.email}">email@example.com</td>
+                        <td>
+                            <span th:if="${student.enabled}" class="badge badge-success">Active</span>
+                            <span th:unless="${student.enabled}" class="badge badge-danger">Inactive</span>
+                        </td>
+                        <td th:text="${student.enrolledCourses.size()}">0</td>
+                        <td>
+                            <a th:href="@{/admin/students/{id}(id=${student.id})}" class="btn btn-secondary">View</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div th:if="${students.isEmpty()}" style="text-align: center; padding: 2rem; color: #6b7280;">
+                No students yet. Add your first student to get started!
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head(title='Admin Dashboard')}"></head>
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    
+    <div class="container">
+        <h1 style="margin: 2rem 0 1rem;">Administrator Dashboard</h1>
+        
+        <div th:replace="~{layout :: alerts}"></div>
+        
+        <div class="alert alert-info">
+            <strong>Welcome, <span th:text="${admin.fullName}"></span>!</strong><br>
+            You have administrator access to manage courses and students.
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <p>Total Courses</p>
+                <h3 th:text="${totalCourses}">0</h3>
+            </div>
+            
+            <div class="stat-card">
+                <p>Published Courses</p>
+                <h3 th:text="${publishedCourses}">0</h3>
+            </div>
+            
+            <div class="stat-card">
+                <p>Total Students</p>
+                <h3 th:text="${totalStudents}">0</h3>
+            </div>
+            
+            <div class="stat-card">
+                <p>Quiz Attempts</p>
+                <h3 th:text="${quizStats.totalAttempts}">0</h3>
+            </div>
+            
+            <div class="stat-card">
+                <p>Completed Quizzes</p>
+                <h3 th:text="${quizStats.completed}">0</h3>
+            </div>
+            
+            <div class="stat-card">
+                <p>Average Score</p>
+                <h3 th:text="${quizStats.averageScore != null ? #numbers.formatDecimal(quizStats.averageScore, 1, 1) + '%' : 'N/A'}">0%</h3>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Quick Actions</h2>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <a th:href="@{/admin/courses/new}" class="btn btn-primary">Create New Course</a>
+                <a th:href="@{/admin/students/new}" class="btn btn-success">Add Student</a>
+                <a th:href="@{/admin/courses}" class="btn btn-secondary">View All Courses</a>
+                <a th:href="@{/admin/students}" class="btn btn-secondary">View All Students</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

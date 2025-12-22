@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(title='Quiz History')}"></head>
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    
+    <div class="container">
+        <h1 style="margin: 2rem 0 1rem;">Quiz History</h1>
+        
+        <div class="card">
+            <table th:if="${!attempts.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Difficulty</th>
+                        <th>Questions</th>
+                        <th>Score</th>
+                        <th>Status</th>
+                        <th>Started</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="attempt : ${attempts}">
+                        <td th:text="${attempt.course.title}">Course</td>
+                        <td><span class="badge badge-info" th:text="${attempt.difficulty}">MEDIUM</span></td>
+                        <td th:text="${attempt.totalQuestions}">10</td>
+                        <td th:text="${attempt.completed ? attempt.score + '%' : 'In Progress'}">85%</td>
+                        <td>
+                            <span th:if="${attempt.passed}" class="badge badge-success">Passed ✓</span>
+                            <span th:if="${attempt.completed and !attempt.passed}" class="badge badge-danger">Failed</span>
+                            <span th:if="${!attempt.completed}" class="badge badge-warning">In Progress</span>
+                        </td>
+                        <td th:text="${#temporals.format(attempt.startedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 10:00</td>
+                        <td>
+                            <a th:if="${attempt.completed}" th:href="@{/student/quiz/{id}/results(id=${attempt.id})}" class="btn btn-secondary">View Results</a>
+                            <a th:unless="${attempt.completed}" th:href="@{/student/quiz/{id}(id=${attempt.id})}" class="btn btn-primary">Continue</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div th:if="${attempts.isEmpty()}" style="text-align: center; padding: 3rem; color: #6b7280;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
+                <h2>No Quiz Attempts Yet</h2>
+                <p>You haven't taken any quizzes yet. Go to your courses and generate an AI-powered quiz!</p>
+                <a th:href="@{/student/courses}" class="btn btn-primary" style="margin-top: 1rem;">View My Courses</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
