@@ -111,6 +111,12 @@ public class UserService {
         log.info("Deleted student: {}", student.getUsername());
     }
     
+    public void deleteUser(Long id) {
+        User user = findById(id);
+        userRepository.delete(user);
+        log.info("Deleted user: {}", user.getUsername());
+    }
+    
     public void enableUser(Long id, boolean enabled) {
         User user = findById(id);
         user.setEnabled(enabled);

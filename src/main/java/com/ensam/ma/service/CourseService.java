@@ -24,6 +24,7 @@ public class CourseService {
     
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
+    private final RAGService ragService;
     
     public Course findById(Long id) {
         return courseRepository.findById(id)
@@ -141,9 +142,10 @@ public class CourseService {
     
     public void markAsIndexed(Long courseId) {
         Course course = findById(courseId);
+        ragService.indexCourse(course);
         course.setIndexed(true);
         courseRepository.save(course);
-        log.info("Marked course {} as indexed", course.getTitle());
+        log.info("Indexed and marked course {} as indexed", course.getTitle());
     }
     
     public long countPublished() {

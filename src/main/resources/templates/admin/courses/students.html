@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head>
+    <title>Manage Course Students</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div style="max-width: 1200px; margin: 2rem auto; padding: 0 2rem;">
+            <div style="margin-bottom: 2rem;">
+                <h1 style="margin-bottom: 0.5rem;">Manage Students for Course</h1>
+                <h2 th:text="${course.title}" style="color: #667eea; margin-top: 0;">Course Title</h2>
+                <a href="/admin/courses" style="color: #667eea; text-decoration: none;">← Back to Courses</a>
+            </div>
+
+            <div th:if="${successMessage}" style="background: #d4edda; color: #155724; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                <span th:text="${successMessage}"></span>
+            </div>
+            
+            <div th:if="${errorMessage}" style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                <span th:text="${errorMessage}"></span>
+            </div>
+
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+                <h3>Enrolled Students</h3>
+                <div th:if="${course.enrolledStudents.empty}" style="color: #666; font-style: italic;">
+                    No students enrolled in this course yet.
+                </div>
+                <table th:unless="${course.enrolledStudents.empty}" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #eee;">
+                            <th style="padding: 1rem; text-align: left;">Username</th>
+                            <th style="padding: 1rem; text-align: left;">Full Name</th>
+                            <th style="padding: 1rem; text-align: left;">Email</th>
+                            <th style="padding: 1rem; text-align: left;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="student : ${course.enrolledStudents}" style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 1rem;" th:text="${student.username}">username</td>
+                            <td style="padding: 1rem;" th:text="${student.fullName}">Full Name</td>
+                            <td style="padding: 1rem;" th:text="${student.email}">email@example.com</td>
+                            <td style="padding: 1rem;">
+                                <form th:action="@{/admin/courses/{courseId}/students/{studentId}/unenroll(courseId=${course.id}, studentId=${student.id})}" 
+                                      method="post" style="display: inline;">
+                                    <button type="submit" 
+                                            onclick="return confirm('Remove this student from the course?')"
+                                            style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                        Unenroll
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h3>Available Students</h3>
+                <div th:if="${allStudents.empty}" style="color: #666; font-style: italic;">
+                    No students available to enroll.
+                </div>
+                <table th:unless="${allStudents.empty}" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #eee;">
+                            <th style="padding: 1rem; text-align: left;">Username</th>
+                            <th style="padding: 1rem; text-align: left;">Full Name</th>
+                            <th style="padding: 1rem; text-align: left;">Email</th>
+                            <th style="padding: 1rem; text-align: left;">Status</th>
+                            <th style="padding: 1rem; text-align: left;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="student : ${allStudents}" style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 1rem;" th:text="${student.username}">username</td>
+                            <td style="padding: 1rem;" th:text="${student.fullName}">Full Name</td>
+                            <td style="padding: 1rem;" th:text="${student.email}">email@example.com</td>
+                            <td style="padding: 1rem;">
+                                <span th:if="${course.enrolledStudents.contains(student)}" 
+                                      style="color: #28a745; font-weight: bold;">
+                                    ✓ Enrolled
+                                </span>
+                                <span th:unless="${course.enrolledStudents.contains(student)}" 
+                                      style="color: #666;">
+                                    Not Enrolled
+                                </span>
+                            </td>
+                            <td style="padding: 1rem;">
+                                <form th:unless="${course.enrolledStudents.contains(student)}"
+                                      th:action="@{/admin/courses/{courseId}/students/{studentId}/enroll(courseId=${course.id}, studentId=${student.id})}" 
+                                      method="post" style="display: inline;">
+                                    <button type="submit" 
+                                            style="background: #667eea; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                        Enroll
+                                    </button>
+                                </form>
+                                <span th:if="${course.enrolledStudents.contains(student)}" style="color: #999;">
+                                    Already enrolled
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
