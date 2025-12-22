@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * LLM Service for generating quiz questions using OpenAI API
+ * LLM Service for generating quiz questions using Google Gemini API
  */
 @Service
 @RequiredArgsConstructor
@@ -39,12 +39,12 @@ public class LLMService {
             
             // If API key not configured, return demo quiz
             if (apiKey == null || apiKey.isEmpty() || apiKey.equals("your-api-key-here")) {
-                log.warn("OpenAI API key not configured, returning demo quiz");
+                log.warn("Gemini API key not configured, returning demo quiz");
                 return generateDemoQuiz(questionCount, difficulty);
             }
             
             String prompt = buildPrompt(context, questionCount, difficulty);
-            String response = callOpenAI(apiKey, prompt);
+            String response = callGemini(apiKey, prompt);
             
             return parseQuizResponse(response);
             
@@ -90,32 +90,41 @@ public class LLMService {
             """, difficulty, context, questionCount);
     }
     
-    private String callOpenAI(String apiKey, String prompt) throws Exception {
+    private String callGemini(String apiKey, String prompt) throws Exception {
+        // Gemini API request format
         String requestBody = objectMapper.writeValueAsString(Map.of(
-            "model", aiConfig.getModel(),
-            "messages", List.of(
-                Map.of("role", "system", "content", "You are an expert quiz generator that creates educational assessments."),
-                Map.of("role", "user", "content", prompt)
+            "contents", List.of(
+                Map.of(
+                    "parts", List.of(
+                        Map.of("text", "You are an expert quiz generator that creates educational assessments. " + prompt)
+                    )
+                )
             ),
-            "temperature", aiConfig.getTemperature(),
-            "max_tokens", aiConfig.getMaxTokens()
+            "generationConfig", Map.of(
+                "temperature", aiConfig.getTemperature(),
+                "maxOutputTokens", aiConfig.getMaxTokens()
+            )
         ));
         
+        String url = String.format(
+            "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
+            aiConfig.getModel(), apiKey
+        );
+        
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create("https://api.openai.com/v1/chat/completions"))
+            .uri(URI.create(url))
             .header("Content-Type", "application/json")
-            .header("Authorization", "Bearer " + apiKey)
             .POST(HttpRequest.BodyPublishers.ofString(requestBody))
             .build();
         
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         
         if (response.statusCode() != 200) {
-            throw new RuntimeException("OpenAI API error: " + response.body());
+            throw new RuntimeException("Gemini API error: " + response.body());
         }
         
         JsonNode root = objectMapper.readTree(response.body());
-        return root.get("choices").get(0).get("message").get("content").asText();
+        return root.get("candidates").get(0).get("content").get("parts").get(0).get("text").asText();
     }
     
     private List<QuizQuestion> parseQuizResponse(String response) throws Exception {
