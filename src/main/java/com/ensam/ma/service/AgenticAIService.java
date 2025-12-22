@@ -30,7 +30,7 @@ public class AgenticAIService {
     public DifficultyLevel determineDifficulty(User student, Course course) {
         log.info("Agent analyzing difficulty for student {} on course {}", student.getUsername(), course.getId());
         
-        List<QuizAttempt> history = quizAttemptRepository.findByStudentAndCourse(student, course);
+        List<QuizAttempt> history = quizAttemptRepository.findByStudentAndCourse(student.getId(), course.getId());
         
         if (history.isEmpty()) {
             log.info("First attempt - agent selects EASY difficulty");

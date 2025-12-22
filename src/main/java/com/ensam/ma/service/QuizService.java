@@ -109,13 +109,13 @@ public class QuizService {
      * Get student's quiz history for a course
      */
     public List<QuizAttempt> getStudentQuizHistory(User student, Course course) {
-        return quizAttemptRepository.findByStudentAndCourse(student, course);
+        return quizAttemptRepository.findByStudentAndCourse(student.getId(), course.getId());
     }
     
     /**
      * Get all quiz attempts for a student
      */
     public List<QuizAttempt> getStudentAllQuizzes(User student) {
-        return quizAttemptRepository.findByStudent(student);
+        return quizAttemptRepository.findByStudentIdOrderByStartedAtDesc(student.getId());
     }
 }
