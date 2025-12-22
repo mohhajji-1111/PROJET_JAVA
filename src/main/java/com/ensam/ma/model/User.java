@@ -53,10 +53,12 @@ public class User implements UserDetails {
     
     // Students' course enrollments
     @ManyToMany(mappedBy = "enrolledStudents", fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<Course> enrolledCourses = new HashSet<>();
     
     // Quiz attempts by students
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<QuizAttempt> quizAttempts = new ArrayList<>();
     
     @PrePersist

@@ -26,28 +26,33 @@ public class DataInitializer implements CommandLineRunner {
     
     @Override
     public void run(String... args) {
-        log.info("Initializing database with sample data...");
-        
-        // Create demo users
-        User admin = createAdmin();
-        User student1 = createStudent("alice", "Alice Johnson", "alice@example.com");
-        User student2 = createStudent("bob", "Bob Smith", "bob@example.com");
-        User student3 = createStudent("carol", "Carol Davis", "carol@example.com");
-        
-        // Create comprehensive courses
-        Course springBootCourse = createSpringBootCourse(admin);
-        Course aiCourse = createAICourse(admin);
-        Course javaCourse = createJavaCourse(admin);
-        
-        // Enroll students in courses
-        enrollStudents(springBootCourse, student1, student2, student3);
-        enrollStudents(aiCourse, student1, student2);
-        enrollStudents(javaCourse, student2, student3);
-        
-        log.info("Database initialization complete!");
-        log.info("=== Demo Credentials ===");
-        log.info("Administrator: admin / admin");
-        log.info("Students: alice/alice, bob/bob, carol/carol");
+        try {
+            log.info("Initializing database with sample data...");
+            
+            // Create demo users
+            User admin = createAdmin();
+            User student1 = createStudent("alice", "Alice Johnson", "alice@example.com");
+            User student2 = createStudent("bob", "Bob Smith", "bob@example.com");
+            User student3 = createStudent("carol", "Carol Davis", "carol@example.com");
+            
+            // Create comprehensive courses
+            Course springBootCourse = createSpringBootCourse(admin);
+            Course aiCourse = createAICourse(admin);
+            Course javaCourse = createJavaCourse(admin);
+            
+            // Enroll students in courses
+            enrollStudents(springBootCourse, student1, student2, student3);
+            enrollStudents(aiCourse, student1, student2);
+            enrollStudents(javaCourse, student2, student3);
+            
+            log.info("Database initialization complete!");
+            log.info("=== Demo Credentials ===");
+            log.info("Administrator: admin / admin");
+            log.info("Students: alice/alice, bob/bob, carol/carol");
+        } catch (Exception e) {
+            log.error("Error during database initialization", e);
+            throw new RuntimeException("Failed to initialize database", e);
+        }
     }
     
     private User createAdmin() {

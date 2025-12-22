@@ -48,9 +48,11 @@ public class Course {
         joinColumns = @JoinColumn(name = "course_id"),
         inverseJoinColumns = @JoinColumn(name = "student_id")
     )
+    @Builder.Default
     private Set<User> enrolledStudents = new HashSet<>();
     
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<QuizAttempt> quizAttempts = new ArrayList<>();
     
     @Column(nullable = false)
