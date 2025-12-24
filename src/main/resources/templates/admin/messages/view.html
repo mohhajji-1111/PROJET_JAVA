@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout :: head(title='View Message')}"></head>
+
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+
+    <div class="container">
+        <h1 style="margin: 2rem 0 1rem;">📧 Message Details</h1>
+
+        <div class="card">
+            <div style="border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h2 style="margin: 0;" th:text="${message.subject}">Subject</h2>
+                <p style="margin: 0.5rem 0; color: #6b7280;">
+                    From: <strong th:text="${message.sender.fullName}">Student Name</strong>
+                    (<span th:text="${message.sender.email}">email@example.com</span>)
+                </p>
+                <p th:if="${message.course}" style="margin: 0.25rem 0; color: #6b7280;">
+                    Course: <strong th:text="${message.course.title}">Course Title</strong>
+                </p>
+                <p style="margin: 0.25rem 0; font-size: 0.9rem; color: #9ca3af;">
+                    Received: <span th:text="${message.formattedSentAt}">2024-01-01 10:00</span>
+                </p>
+            </div>
+
+            <div style="background: #f9fafb; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <p style="white-space: pre-wrap; margin: 0;" th:text="${message.content}">
+                    Message content here...
+                </p>
+            </div>
+
+            <!-- Reply Form -->
+            <div th:unless="${message.replied}" style="border-top: 1px solid #e5e7eb; padding-top: 1.5rem;">
+                <h3 style="margin-top: 0;">✍️ Send Reply</h3>
+                <form th:action="@{/admin/messages/{id}/reply(id=${message.id})}" method="post">
+                    <div class="form-group">
+                        <label for="content">Your Response:</label>
+                        <textarea id="content" name="content" rows="5" required placeholder="Type your reply here..."
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Reply</button>
+                </form>
+            </div>
+
+            <div th:if="${message.replied}"
+                style="background: #d1fae5; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                <strong style="color: #059669;">✓ You have already replied to this message.</strong>
+            </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <a th:href="@{/admin/messages}" class="btn btn-secondary">← Back to Inbox</a>
+        </div>
+    </div>
+</body>
+
+</html>

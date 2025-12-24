@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout :: head(title='Message Inbox')}"></head>
+
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+
+    <div class="container">
+        <h1 style="margin: 2rem 0 1rem;">📬 Advice Requests Inbox</h1>
+
+        <!-- Unreplied Messages Alert -->
+        <div th:if="${!#lists.isEmpty(unreplied)}"
+            style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <strong style="color: #92400e;">⚠️ You have <span th:text="${#lists.size(unreplied)}">0</span> unreplied
+                advice request(s)</strong>
+        </div>
+
+        <div th:if="${#lists.isEmpty(messages)}" class="card" style="text-align: center; padding: 3rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+            <h2>No Messages</h2>
+            <p style="color: #6b7280;">Your inbox is empty.</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(messages)}">
+            <div th:each="message : ${messages}" class="card" style="margin-bottom: 1rem;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <span th:unless="${message.read}" class="badge"
+                                style="background: #ef4444; color: white;">NEW</span>
+                            <span th:unless="${message.replied}" class="badge badge-warning">Needs Reply</span>
+                            <span th:if="${message.replied}" class="badge badge-success">Replied ✓</span>
+                        </div>
+                        <h3 style="margin: 0;" th:text="${message.subject}">Subject</h3>
+                        <p style="margin: 0.25rem 0; color: #6b7280;">
+                            From: <strong th:text="${message.sender.fullName}">Student Name</strong>
+                            <span th:if="${message.course}" th:text="' | Course: ' + ${message.course.title}"></span>
+                        </p>
+                        <p style="margin: 0.25rem 0; font-size: 0.85rem; color: #9ca3af;"
+                            th:text="${message.formattedSentAt}">
+                            2024-01-01 10:00
+                        </p>
+                        <p style="margin-top: 0.5rem; color: #374151;"
+                            th:text="${#strings.abbreviate(message.content, 100)}">
+                            Message preview...
+                        </p>
+                    </div>
+                    <div>
+                        <a th:href="@{/admin/messages/{id}(id=${message.id})}" class="btn btn-primary">
+                            View & Reply
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <a th:href="@{/admin/dashboard}" class="btn btn-secondary">← Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+
+</html>

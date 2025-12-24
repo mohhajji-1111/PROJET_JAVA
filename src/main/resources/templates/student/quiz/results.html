@@ -1,56 +1,93 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head th:replace="~{layout :: head(title='Quiz Results')}"></head>
+
 <body>
     <nav th:replace="~{layout :: navbar}"></nav>
-    
+
     <div class="container">
         <h1 style="margin: 2rem 0 1rem;">Quiz Results</h1>
-        
-        <div class="card">
-            <div style="text-align: center; padding: 2rem;">
-                <h2 style="font-size: 3rem; margin: 1rem 0; color: #667eea;" th:text="${attempt.score} + '%'">85%</h2>
-                
-                <div th:if="${attempt.passed}">
-                    <div style="font-size: 3rem;">🎉</div>
-                    <h3 style="color: #10b981; margin: 1rem 0;">Congratulations! You Passed!</h3>
+
+        <!-- AGENT'S VALIDATION DECISION - PRIMARY CARD -->
+        <div class="card" style="text-align: center; padding: 2rem; margin-bottom: 1.5rem;">
+            <!-- VALIDATED -->
+            <div th:if="${attempt.passed}">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+                <h2 style="color: #10b981; margin: 0; font-size: 1.8rem;">
+                    CONGRATULATIONS: COURSE VALIDATED!
+                </h2>
+                <p style="color: #6b7280; margin-top: 0.5rem;">
+                    You have successfully demonstrated mastery of this material.
+                </p>
+                <div
+                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1rem 2rem; border-radius: 8px; display: inline-block; margin-top: 1rem;">
+                    <span style="font-size: 2rem; font-weight: bold;" th:text="${attempt.score} + '%'">100%</span>
                 </div>
-                
-                <div th:unless="${attempt.passed}">
-                    <div style="font-size: 3rem;">📚</div>
-                    <h3 style="color: #f59e0b; margin: 1rem 0;">Keep Learning!</h3>
-                </div>
-                
-                <div style="display: flex; justify-content: center; gap: 2rem; margin: 2rem 0;">
-                    <div>
-                        <p style="color: #6b7280; margin: 0;">Correct Answers</p>
-                        <p style="font-size: 1.5rem; font-weight: bold; margin: 0.5rem 0;" th:text="${attempt.correctAnswers} + ' / ' + ${attempt.totalQuestions}">8 / 10</p>
-                    </div>
-                    <div>
-                        <p style="color: #6b7280; margin: 0;">Difficulty</p>
-                        <p style="font-size: 1.5rem; font-weight: bold; margin: 0.5rem 0;">
-                            <span class="badge badge-info" th:text="${attempt.difficulty}">MEDIUM</span>
-                        </p>
-                    </div>
-                    <div>
-                        <p style="color: #6b7280; margin: 0;">Completed</p>
-                        <p style="font-size: 1rem; margin: 0.5rem 0;" th:text="${#temporals.format(attempt.completedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 14:30</p>
-                    </div>
+            </div>
+
+            <!-- CONTINUE LEARNING -->
+            <div th:unless="${attempt.passed}">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">📚</div>
+                <h2 style="color: #f59e0b; margin: 0; font-size: 1.8rem;">
+                    CONTINUE LEARNING: LEVEL NOT YET REACHED
+                </h2>
+                <p style="color: #6b7280; margin-top: 0.5rem;">
+                    You need at least 70% to validate this course. Keep studying!
+                </p>
+                <div
+                    style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 1rem 2rem; border-radius: 8px; display: inline-block; margin-top: 1rem;">
+                    <span style="font-size: 2rem; font-weight: bold;" th:text="${attempt.score} + '%'">50%</span>
                 </div>
             </div>
         </div>
-        
+
+        <!-- SCORE DETAILS -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-around; text-align: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <p style="color: #6b7280; margin: 0;">Correct Answers</p>
+                    <p style="font-size: 1.5rem; font-weight: bold; margin: 0.5rem 0;"
+                        th:text="${attempt.correctAnswers} + ' / ' + ${attempt.totalQuestions}">8 / 10</p>
+                </div>
+                <div>
+                    <p style="color: #6b7280; margin: 0;">Difficulty</p>
+                    <p style="font-size: 1.5rem; font-weight: bold; margin: 0.5rem 0;">
+                        <span class="badge badge-info" th:text="${attempt.difficulty}">MEDIUM</span>
+                    </p>
+                </div>
+                <div>
+                    <p style="color: #6b7280; margin: 0;">Time Used</p>
+                    <p style="font-size: 1rem; margin: 0.5rem 0; font-weight: bold;"
+                        th:text="${#temporals.format(attempt.completedAt, 'HH:mm:ss')}">14:30:00</p>
+                </div>
+                <div>
+                    <p style="color: #6b7280; margin: 0;">Status</p>
+                    <p style="margin: 0.5rem 0;">
+                        <span th:if="${attempt.passed}" class="badge badge-success">✓ VALIDATED</span>
+                        <span th:unless="${attempt.passed}" class="badge badge-warning">CONTINUE</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI AGENT DECISION BREAKDOWN -->
         <div class="card" th:if="${attempt.agentDecision}">
-            <h2>🤖 AI Agent Evaluation</h2>
-            <div style="background: #f9fafb; padding: 1.5rem; border-radius: 8px; white-space: pre-wrap; line-height: 1.8;" th:text="${attempt.agentDecision}">
-                AI agent decision and feedback...
+            <h2 style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>🤖</span> AI Agent Supervisor Analysis
+            </h2>
+            <div style="background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #667eea; white-space: pre-wrap; line-height: 1.8; font-family: monospace;"
+                th:text="${attempt.agentDecision}">
+                AI agent decision...
             </div>
         </div>
-        
+
+        <!-- DETAILED QUESTION RESULTS -->
         <div class="card">
-            <h2>Detailed Results</h2>
-            
-            <div th:each="question, iterStat : ${attempt.questions}" style="margin-bottom: 2rem; padding: 1.5rem; background: #f9fafb; border-radius: 8px;">
+            <h2>📝 Detailed Results</h2>
+
+            <div th:each="question, iterStat : ${attempt.questions}"
+                style="margin-bottom: 2rem; padding: 1.5rem; background: #f9fafb; border-radius: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                     <h3 style="margin: 0;">
                         Question <span th:text="${question.questionNumber}">1</span>
@@ -58,40 +95,50 @@
                     <span th:if="${question.answeredCorrectly}" class="badge badge-success">✓ Correct</span>
                     <span th:unless="${question.answeredCorrectly}" class="badge badge-danger">✗ Incorrect</span>
                 </div>
-                
-                <p style="font-size: 1.1rem; font-weight: 500; margin-bottom: 1.5rem;" th:text="${question.questionText}">
+
+                <p style="font-size: 1.1rem; font-weight: 500; margin-bottom: 1.5rem;"
+                    th:text="${question.questionText}">
                     Question text?
                 </p>
-                
-                <div th:each="option : ${question.options}" 
-                     style="margin: 0.5rem 0; padding: 1rem; border-radius: 4px;"
-                     th:styleappend="${option.optionNumber == question.correctOptionNumber ? 'background: #d1fae5; border: 2px solid #10b981;' : 
+
+                <div th:each="option : ${question.options}" style="margin: 0.5rem 0; padding: 1rem; border-radius: 4px;"
+                    th:styleappend="${option.optionNumber == question.correctOptionNumber ? 'background: #d1fae5; border: 2px solid #10b981;' : 
                                       (question.selectedOptionNumber != null and option.optionNumber == question.selectedOptionNumber and option.optionNumber != question.correctOptionNumber) ? 'background: #fee2e2; border: 2px solid #ef4444;' : 
                                       'background: white; border: 2px solid #e5e7eb;'}">
-                    
+
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span th:text="${option.optionText}">Option text</span>
-                        
-                        <span th:if="${option.optionNumber == question.correctOptionNumber}" style="color: #10b981; font-weight: bold;">
+
+                        <span th:if="${option.optionNumber == question.correctOptionNumber}"
+                            style="color: #10b981; font-weight: bold;">
                             ✓ Correct Answer
                         </span>
-                        <span th:if="${question.selectedOptionNumber != null and option.optionNumber == question.selectedOptionNumber and option.optionNumber != question.correctOptionNumber}" style="color: #ef4444; font-weight: bold;">
+                        <span
+                            th:if="${question.selectedOptionNumber != null and option.optionNumber == question.selectedOptionNumber and option.optionNumber != question.correctOptionNumber}"
+                            style="color: #ef4444; font-weight: bold;">
                             Your Answer
                         </span>
                     </div>
                 </div>
-                
-                <div style="margin-top: 1rem; padding: 1rem; background: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 4px;">
-                    <strong>Explanation:</strong>
+
+                <div
+                    style="margin-top: 1rem; padding: 1rem; background: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                    <strong>💡 Explanation:</strong>
                     <p style="margin: 0.5rem 0 0 0;" th:text="${question.explanation}">Explanation text</p>
                 </div>
             </div>
         </div>
-        
-        <div style="display: flex; gap: 1rem; margin: 1rem 0;">
-            <a th:href="@{/student/courses/{id}(id=${attempt.course.id})}" class="btn btn-primary">Back to Course</a>
+
+        <!-- ACTION BUTTONS -->
+        <div style="display: flex; gap: 1rem; margin: 1.5rem 0; flex-wrap: wrap;">
+            <a th:href="@{/student/courses/{id}(id=${attempt.course.id})}" class="btn btn-primary">
+                <span th:unless="${attempt.passed}">📚 Study Again</span>
+                <span th:if="${attempt.passed}">✓ Back to Course</span>
+            </a>
+            <a th:href="@{/student/quiz-history}" class="btn btn-secondary">Quiz History</a>
             <a th:href="@{/student/dashboard}" class="btn btn-secondary">Dashboard</a>
         </div>
     </div>
 </body>
+
 </html>

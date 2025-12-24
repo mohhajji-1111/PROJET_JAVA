@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout :: head(title='Pending Validations')}"></head>
+
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+
+    <div class="container">
+        <h1 style="margin: 2rem 0 1rem;">🎯 Pending Course Validations</h1>
+        <p style="color: #6b7280; margin-bottom: 1.5rem;">
+            Students who have completed all difficulty levels (EASY, MEDIUM, HARD) with 80%+ scores.
+        </p>
+
+        <div th:if="${#lists.isEmpty(pendingValidations)}" class="card" style="text-align: center; padding: 3rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+            <h2>No Pending Validations</h2>
+            <p style="color: #6b7280;">All eligible students have been validated.</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(pendingValidations)}">
+            <div th:each="enrollment : ${pendingValidations}" class="card" style="margin-bottom: 1rem;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h3 style="margin: 0;" th:text="${enrollment.student.fullName}">Student Name</h3>
+                        <p style="margin: 0.25rem 0; color: #6b7280;">
+                            Course: <strong th:text="${enrollment.course.title}">Course Title</strong>
+                        </p>
+                        <p style="margin: 0.25rem 0; font-size: 0.9rem; color: #10b981;">
+                            <span th:text="${enrollment.progressSummary}">EASY: 85% | MEDIUM: 82% | HARD: 80%</span>
+                        </p>
+                        <p style="margin: 0.25rem 0; font-size: 0.85rem; color: #6b7280;">
+                            Enrolled: <span
+                                th:text="${#temporals.format(enrollment.enrolledAt, 'yyyy-MM-dd')}">2024-01-01</span>
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <form th:action="@{/admin/validations/{id}/approve(id=${enrollment.id})}" method="post">
+                            <button type="submit" class="btn btn-success" style="background: #10b981;">
+                                ✓ Approve Validation
+                            </button>
+                        </form>
+                        <a th:href="@{/admin/students/{id}(id=${enrollment.student.id})}" class="btn btn-secondary">
+                            View Student
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <a th:href="@{/admin/dashboard}" class="btn btn-secondary">← Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+
+</html>

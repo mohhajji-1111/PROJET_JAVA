@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head th:replace="~{layout :: head(title='Courses')}"></head>
+
 <body>
     <nav th:replace="~{layout :: navbar}"></nav>
-    
+
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin: 2rem 0 1rem;">
             <h1>Course Management</h1>
             <a th:href="@{/admin/courses/new}" class="btn btn-primary">Create New Course</a>
         </div>
-        
+
         <div th:replace="~{layout :: alerts}"></div>
-        
+
         <div class="card">
             <table>
                 <thead>
                     <tr>
                         <th>Title</th>
+                        <th>Enrollment Code</th>
                         <th>Status</th>
                         <th>Indexed</th>
                         <th>Enrolled Students</th>
@@ -27,6 +30,12 @@
                 <tbody>
                     <tr th:each="course : ${courses}">
                         <td th:text="${course.title}">Course Title</td>
+                        <td>
+                            <code th:text="${course.enrollmentCode}"
+                                style="font-size: 1.1rem; font-weight: bold; letter-spacing: 0.15em; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                                ABC123
+                            </code>
+                        </td>
                         <td>
                             <span th:if="${course.published}" class="badge badge-success">Published</span>
                             <span th:unless="${course.published}" class="badge badge-warning">Draft</span>
@@ -43,11 +52,12 @@
                     </tr>
                 </tbody>
             </table>
-            
+
             <div th:if="${courses.isEmpty()}" style="text-align: center; padding: 2rem; color: #6b7280;">
                 No courses yet. Create your first course to get started!
             </div>
         </div>
     </div>
 </body>
+
 </html>

@@ -17,180 +17,250 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * LLM Service for generating quiz questions using Google Gemini API
+ * LLM Service with Anti-Pattern Distractor Prompt
+ * Uses Groq API with strict RAG enforcement
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class LLMService {
-    
+
     private final AIConfig aiConfig;
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
-    /**
-     * Generate quiz questions based on course content using LLM
-     */
-    public List<QuizQuestion> generateQuiz(String context, int questionCount, DifficultyLevel difficulty) {
-        log.info("Generating {} {} questions using LLM", questionCount, difficulty);
-        
+
+    // Groq API endpoint (faster, more reliable)
+    private static final String GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+    // Current Groq models (Dec 2024)
+    private static final String[] GROQ_MODELS = { "llama-3.3-70b-versatile", "llama3-70b-8192", "gemma2-9b-it" };
+
+    public List<QuizQuestion> generateQuiz(String courseContent, int questionCount, DifficultyLevel difficulty) {
+        log.info("=== LLM SERVICE: Generating {} {} questions ===", questionCount, difficulty);
+
+        String apiKey = aiConfig.getApi().getKey();
+
+        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("your-api-key-here")) {
+            throw new AIGenerationException("API key not configured");
+        }
+
+        if (courseContent == null || courseContent.trim().isEmpty()) {
+            throw new AIGenerationException("Course content is empty - cannot generate quiz");
+        }
+
+        log.info("Course content: {} characters", courseContent.length());
+
         try {
-            String apiKey = aiConfig.getApi().getKey();
-            
-            // If API key not configured, return demo quiz
-            if (apiKey == null || apiKey.isEmpty() || apiKey.equals("your-api-key-here")) {
-                log.warn("Gemini API key not configured, returning demo quiz");
-                return generateDemoQuiz(questionCount, difficulty);
-            }
-            
-            String prompt = buildPrompt(context, questionCount, difficulty);
-            String response = callGemini(apiKey, prompt);
-            
-            return parseQuizResponse(response);
-            
+            String prompt = buildAntiPatternPrompt(courseContent, questionCount, difficulty);
+            String response = callLLMAPI(apiKey, prompt);
+            List<QuizQuestion> questions = parseQuizResponse(response);
+
+            log.info("SUCCESS: Generated {} high-quality questions", questions.size());
+            return questions;
+
+        } catch (AIGenerationException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Error generating quiz with LLM, falling back to demo quiz", e);
-            return generateDemoQuiz(questionCount, difficulty);
+            log.error("LLM generation failed: {}", e.getMessage());
+            throw new AIGenerationException("AI quiz generation failed: " + e.getMessage(), e);
         }
     }
-    
-    private String buildPrompt(String context, int questionCount, DifficultyLevel difficulty) {
+
+    /**
+     * ANTI-PATTERN PROMPT: Forces unique, plausible distractors
+     * Strictly uses ONLY the provided RAG context
+     */
+    private String buildAntiPatternPrompt(String courseContent, int questionCount, DifficultyLevel difficulty) {
+        String difficultyGuidance = switch (difficulty) {
+            case EASY -> "Basic recall questions. Test direct facts from the text.";
+            case MEDIUM -> "Application questions. Test understanding of concepts.";
+            case HARD -> "Analysis questions. Test ability to synthesize information.";
+        };
+
         return String.format("""
-            You are an expert educational content creator. Generate a multiple-choice quiz based STRICTLY on the following course content.
-            
-            CRITICAL RULES:
-            1. ALL questions MUST be derived from the provided course content only
-            2. NO external knowledge or hallucinated information
-            3. Each question has exactly 4 options (A, B, C, D)
-            4. Only ONE option is correct
-            5. Include clear explanations for correct answers
-            6. Difficulty level: %s
-            
-            COURSE CONTENT:
-            %s
-            
-            Generate exactly %d questions in this JSON format:
-            {
-              "questions": [
+                You are an expert educational assessment creator.
+
+                === COURSE CONTENT (USE ONLY THIS) ===
+                %s
+                === END OF COURSE CONTENT ===
+
+                Generate exactly %d multiple-choice questions. Difficulty: %s
+                %s
+
+                ══════════════════════════════════════════
+                CRITICAL RULES FOR DISTRACTORS (WRONG ANSWERS):
+                ══════════════════════════════════════════
+
+                ❌ FORBIDDEN PATTERNS - NEVER USE THESE:
+                • "It is unrelated to..."
+                • "It contradicts..."
+                • "It is deprecated..."
+                • "This is not supported..."
+                • "None of the above"
+                • Generic phrases like "Option A" or "Topic 1"
+
+                ✓ REQUIRED FOR EACH WRONG ANSWER:
+                • Must be a PLAUSIBLE technical statement
+                • Must be written in the SAME style as the correct answer
+                • Must represent a COMMON MISCONCEPTION or related concept
+                • Must be UNIQUE (no two distractors should be similar)
+
+                ✓ EXAMPLE OF GOOD DISTRACTORS:
+                If the question is about "Spring Boot Auto-Configuration":
+                • GOOD: "Requires explicit XML configuration for each bean"
+                • GOOD: "Only works with embedded Jetty server"
+                • BAD: "It is unrelated to configuration"
+                • BAD: "This feature is deprecated"
+
+                ══════════════════════════════════════════
+
+                VARY the correct answer position (0, 1, 2, or 3) across questions.
+
+                Return ONLY this JSON format (no markdown, no explanation):
                 {
-                  "questionText": "The question text here?",
-                  "options": [
-                    "Option A text",
-                    "Option B text",
-                    "Option C text",
-                    "Option D text"
-                  ],
-                  "correctOption": 0,
-                  "explanation": "Detailed explanation of why this is correct"
+                  "questions": [
+                    {
+                      "questionText": "Specific question based on course content?",
+                      "options": [
+                        "First plausible option",
+                        "Second plausible option",
+                        "Third plausible option",
+                        "Fourth plausible option"
+                      ],
+                      "correctOption": 0,
+                      "explanation": "Brief explanation citing the course content"
+                    }
+                  ]
                 }
-              ]
+                """, courseContent, questionCount, difficulty, difficultyGuidance);
+    }
+
+    private String callLLMAPI(String apiKey, String prompt) throws Exception {
+        Exception lastException = null;
+
+        for (String model : GROQ_MODELS) {
+            try {
+                log.info("Trying model: {}", model);
+                return callGroqWithModel(apiKey, prompt, model);
+            } catch (Exception e) {
+                log.warn("Model {} failed: {}", model, e.getMessage());
+                lastException = e;
             }
-            
-            Respond ONLY with valid JSON, no additional text.
-            """, difficulty, context, questionCount);
+        }
+
+        throw new AIGenerationException("All LLM models failed. Last error: " +
+                (lastException != null ? lastException.getMessage() : "Unknown"));
     }
-    
-    private String callGemini(String apiKey, String prompt) throws Exception {
-        // Gemini API request format
-        String requestBody = objectMapper.writeValueAsString(Map.of(
-            "contents", List.of(
-                Map.of(
-                    "parts", List.of(
-                        Map.of("text", "You are an expert quiz generator that creates educational assessments. " + prompt)
-                    )
-                )
-            ),
-            "generationConfig", Map.of(
-                "temperature", aiConfig.getTemperature(),
-                "maxOutputTokens", aiConfig.getMaxTokens()
-            )
-        ));
-        
-        String url = String.format(
-            "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
-            aiConfig.getModel(), apiKey
-        );
-        
+
+    private String callGroqWithModel(String apiKey, String prompt, String model) throws Exception {
+        Map<String, Object> payload = Map.of(
+                "model", model,
+                "messages", List.of(
+                        Map.of(
+                                "role", "system",
+                                "content",
+                                "You are an expert quiz generator. Output ONLY valid JSON. Never use lazy distractor patterns."),
+                        Map.of(
+                                "role", "user",
+                                "content", prompt)),
+                "temperature", 0.7,
+                "max_tokens", 4096);
+
+        String requestBody = objectMapper.writeValueAsString(payload);
+
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-            .build();
-        
+                .uri(URI.create(GROQ_URL))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + apiKey)
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        
+
+        log.info("API response: HTTP {}", response.statusCode());
+
         if (response.statusCode() != 200) {
-            throw new RuntimeException("Gemini API error: " + response.body());
+            String errorMsg = extractErrorMessage(response.body());
+            throw new RuntimeException("HTTP " + response.statusCode() + ": " + errorMsg);
         }
-        
+
         JsonNode root = objectMapper.readTree(response.body());
-        return root.get("candidates").get(0).get("content").get("parts").get(0).get("text").asText();
+
+        if (!root.has("choices") || root.get("choices").isEmpty()) {
+            throw new RuntimeException("No choices in response");
+        }
+
+        String content = root.get("choices").get(0).get("message").get("content").asText();
+        log.info("Received {} characters from LLM", content.length());
+        return content;
     }
-    
+
+    private String extractErrorMessage(String body) {
+        try {
+            JsonNode root = objectMapper.readTree(body);
+            if (root.has("error") && root.get("error").has("message")) {
+                return root.get("error").get("message").asText();
+            }
+        } catch (Exception ignored) {
+        }
+        return body.length() > 200 ? body.substring(0, 200) : body;
+    }
+
     private List<QuizQuestion> parseQuizResponse(String response) throws Exception {
-        // Clean up response if it has markdown code blocks
         String cleaned = response.trim();
-        if (cleaned.startsWith("```json")) {
+
+        // Remove markdown code blocks
+        if (cleaned.startsWith("```json"))
             cleaned = cleaned.substring(7);
-        }
-        if (cleaned.startsWith("```")) {
+        else if (cleaned.startsWith("```"))
             cleaned = cleaned.substring(3);
-        }
-        if (cleaned.endsWith("```")) {
+        if (cleaned.endsWith("```"))
             cleaned = cleaned.substring(0, cleaned.length() - 3);
-        }
         cleaned = cleaned.trim();
-        
+
+        // Find JSON boundaries
+        int start = cleaned.indexOf('{');
+        int end = cleaned.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            cleaned = cleaned.substring(start, end + 1);
+        }
+
         JsonNode root = objectMapper.readTree(cleaned);
         JsonNode questionsNode = root.get("questions");
-        
-        List<QuizQuestion> questions = new ArrayList<>();
-        for (JsonNode questionNode : questionsNode) {
-            QuizQuestion question = new QuizQuestion();
-            question.setQuestionText(questionNode.get("questionText").asText());
-            question.setCorrectOption(questionNode.get("correctOption").asInt());
-            question.setExplanation(questionNode.get("explanation").asText());
-            
-            List<String> options = new ArrayList<>();
-            JsonNode optionsNode = questionNode.get("options");
-            for (JsonNode option : optionsNode) {
-                options.add(option.asText());
-            }
-            question.setOptions(options);
-            
-            questions.add(question);
+
+        if (questionsNode == null || !questionsNode.isArray()) {
+            throw new RuntimeException("Invalid response: 'questions' array not found");
         }
-        
-        return questions;
-    }
-    
-    private List<QuizQuestion> generateDemoQuiz(int questionCount, DifficultyLevel difficulty) {
-        log.info("Generating demo quiz with {} questions", questionCount);
-        
+
         List<QuizQuestion> questions = new ArrayList<>();
-        
-        // Generate demo questions based on count
-        for (int i = 0; i < questionCount; i++) {
+
+        for (JsonNode qNode : questionsNode) {
             QuizQuestion q = new QuizQuestion();
-            q.setQuestionText("Demo Question " + (i + 1) + ": What is a key concept in this course?");
-            q.setOptions(List.of(
-                "Option A: First concept",
-                "Option B: Second concept (correct)",
-                "Option C: Third concept",
-                "Option D: Fourth concept"
-            ));
-            q.setCorrectOption(1); // Option B is correct
-            q.setExplanation("This is the correct answer because it directly relates to the course content. " +
-                           "Option B is supported by the material covered in this section.");
+            q.setQuestionText(qNode.get("questionText").asText());
+            q.setCorrectOption(qNode.get("correctOption").asInt());
+            q.setExplanation(qNode.has("explanation") ? qNode.get("explanation").asText() : "See course content.");
+
+            List<String> options = new ArrayList<>();
+            for (JsonNode opt : qNode.get("options")) {
+                options.add(opt.asText());
+            }
+            q.setOptions(options);
+
             questions.add(q);
         }
-        
+
         return questions;
     }
-    
-    /**
-     * Quiz question data structure
-     */
+
+    public static class AIGenerationException extends RuntimeException {
+        public AIGenerationException(String message) {
+            super(message);
+        }
+
+        public AIGenerationException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
     @lombok.Data
     public static class QuizQuestion {
         private String questionText;

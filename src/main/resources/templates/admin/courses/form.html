@@ -1,33 +1,35 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head th:replace="~{layout :: head(title=${courseId != null ? 'Edit Course' : 'Create Course'})}"></head>
+
 <body>
     <nav th:replace="~{layout :: navbar}"></nav>
-    
+
     <div class="container">
-        <h1 style="margin: 2rem 0 1rem;" th:text="${courseId != null ? 'Edit Course' : 'Create New Course'}">Course Form</h1>
-        
+        <h1 style="margin: 2rem 0 1rem;" th:text="${courseId != null ? 'Edit Course' : 'Create New Course'}">Course Form
+        </h1>
+
         <div class="card">
-            <form th:action="${courseId != null ? '/admin/courses/' + courseId : '/admin/courses'}" 
-                  th:object="${courseDTO}" 
-                  method="post">
-                
+            <form th:action="${isNew ? '/admin/courses/new' : '/admin/courses/' + courseId + '/edit'}"
+                th:object="${courseDTO}" method="post">
+
                 <div class="form-group">
                     <label for="title">Course Title *</label>
                     <input type="text" id="title" th:field="*{title}" class="form-control" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="description">Description</label>
                     <textarea id="description" th:field="*{description}" class="form-control" rows="3"></textarea>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="content">Course Content *</label>
                     <textarea id="content" th:field="*{content}" class="form-control" rows="15" required></textarea>
                     <small style="color: #6b7280;">This content will be used for AI quiz generation via RAG.</small>
                 </div>
-                
+
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                     <button type="submit" class="btn btn-primary">
                         <span th:text="${courseId != null ? 'Update Course' : 'Create Course'}"></span>
@@ -38,4 +40,5 @@
         </div>
     </div>
 </body>
+
 </html>

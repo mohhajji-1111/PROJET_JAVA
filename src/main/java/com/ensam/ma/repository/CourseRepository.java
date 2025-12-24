@@ -8,29 +8,40 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
-    
+
     List<Course> findByPublishedTrue();
-    
+
     List<Course> findByIndexedTrue();
-    
+
     List<Course> findByCreatedBy(User creator);
-    
+
+    /**
+     * Find a course by its unique enrollment code
+     */
+    Optional<Course> findByEnrollmentCode(String enrollmentCode);
+
+    /**
+     * Check if an enrollment code already exists
+     */
+    boolean existsByEnrollmentCode(String enrollmentCode);
+
     @Query("SELECT c FROM Course c JOIN c.enrolledStudents s WHERE s.id = :studentId")
     List<Course> findByEnrolledStudentId(@Param("studentId") Long studentId);
-    
+
     @Query("SELECT c FROM Course c JOIN c.enrolledStudents s WHERE s.id = :studentId AND c.published = true")
     List<Course> findPublishedCoursesByStudentId(@Param("studentId") Long studentId);
-    
+
     @Query("SELECT COUNT(c) FROM Course c WHERE c.published = true")
     long countPublished();
-    
+
     @Query("SELECT COUNT(c) FROM Course c WHERE c.indexed = true")
     long countIndexed();
-    
+
     @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END " +
-           "FROM Course c JOIN c.enrolledStudents s WHERE c.id = :courseId AND s.id = :studentId")
+            "FROM Course c JOIN c.enrolledStudents s WHERE c.id = :courseId AND s.id = :studentId")
     boolean isStudentEnrolled(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
 }

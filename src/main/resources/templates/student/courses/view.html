@@ -1,54 +1,87 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head th:replace="~{layout :: head(title='Course Details')}"></head>
+
 <body>
     <nav th:replace="~{layout :: navbar}"></nav>
-    
+
     <div class="container">
         <h1 style="margin: 2rem 0 1rem;" th:text="${course.title}">Course Title</h1>
-        
+
         <div th:replace="~{layout :: alerts}"></div>
-        
+
         <div class="card">
             <div th:if="${hasPassed}" class="alert alert-success">
                 <strong>🎉 Congratulations!</strong><br>
                 You have successfully passed this course! You can still take additional quizzes for practice.
             </div>
-            
+
             <p><strong>Description:</strong></p>
             <p th:text="${course.description ?: 'No description'}">Course description</p>
-            
+
             <hr style="margin: 2rem 0;">
-            
+
             <h3>Course Content</h3>
-            <div style="background: #f9fafb; padding: 1.5rem; border-radius: 4px; margin-top: 1rem; white-space: pre-wrap; line-height: 1.8;" th:text="${course.content}">
+            <div style="background: #f9fafb; padding: 1.5rem; border-radius: 4px; margin-top: 1rem; white-space: pre-wrap; line-height: 1.8;"
+                th:text="${course.content}">
                 Course content...
             </div>
-            
-            <div style="margin-top: 2rem; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; color: white;">
+
+            <div
+                style="margin-top: 2rem; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; color: white;">
                 <h3 style="margin-top: 0;">🤖 AI-Generated Quiz</h3>
                 <p>Our agentic AI will generate a personalized quiz based on this course content using:</p>
                 <ul>
-                    <li><strong>RAG (Retrieval-Augmented Generation):</strong> Questions derived strictly from course content</li>
+                    <li><strong>RAG (Retrieval-Augmented Generation):</strong> Questions derived strictly from course
+                        content</li>
                     <li><strong>Adaptive Difficulty:</strong> AI adjusts based on your performance history</li>
                     <li><strong>Intelligent Evaluation:</strong> AI agent decides if you've validated the course</li>
                 </ul>
-                
-                <form th:if="${course.indexed}" th:action="@{/student/courses/{id}/generate-quiz(id=${course.id})}" method="post" style="margin-top: 1rem;">
+
+                <form th:if="${course.indexed}" th:action="@{/student/courses/{id}/generate-quiz(id=${course.id})}"
+                    method="post" style="margin-top: 1rem;">
                     <button type="submit" class="btn btn-success" style="font-size: 1.1rem; padding: 1rem 2rem;">
                         Generate AI Quiz
                     </button>
                 </form>
-                
+
                 <div th:unless="${course.indexed}" style="margin-top: 1rem;">
-                    <span class="badge badge-warning" style="font-size: 1rem;">Quiz generation not available yet - course needs to be indexed</span>
+                    <span class="badge badge-warning" style="font-size: 1rem;">Quiz generation not available yet -
+                        course needs to be indexed</span>
                 </div>
             </div>
         </div>
-        
-        <div class="card" th:if="${!quizAttempts.isEmpty()}">
+
+        <!-- ASK ADVICE SECTION -->
+        <div class="card" style="margin-top: 1.5rem;">
+            <h2 style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>💬</span> Ask for Advice
+            </h2>
+            <p style="color: #6b7280; margin-bottom: 1rem;">
+                Need help understanding this course? Send a message to your teacher for guidance.
+            </p>
+
+            <form th:action="@{/student/courses/{id}/ask-advice(id=${course.id})}" method="post">
+                <div class="form-group">
+                    <label for="subject">Subject:</label>
+                    <input type="text" id="subject" name="subject" required
+                        placeholder="e.g., Help understanding Spring Boot annotations"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="content">Your Question:</label>
+                    <textarea id="content" name="content" rows="4" required
+                        placeholder="Describe what you need help with..."
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">📤 Send Message</button>
+            </form>
+        </div>
+
+        <div class="card" th:if="${quizHistory != null and !quizHistory.isEmpty()}">
             <h2>Your Quiz History for this Course</h2>
-            
+
             <table>
                 <thead>
                     <tr>
@@ -56,33 +89,39 @@
                         <th>Difficulty</th>
                         <th>Questions</th>
                         <th>Score</th>
+                        <th>Duration</th>
                         <th>Status</th>
                         <th>Date</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="attempt, iterStat : ${quizAttempts}">
+                    <tr th:each="attempt, iterStat : ${quizHistory}">
                         <td th:text="${iterStat.count}">1</td>
                         <td><span class="badge badge-info" th:text="${attempt.difficulty}">MEDIUM</span></td>
                         <td th:text="${attempt.totalQuestions}">10</td>
                         <td th:text="${attempt.completed ? attempt.score + '%' : 'In Progress'}">85%</td>
+                        <td th:text="${attempt.completed ? attempt.durationString : '-'}">5 min 30 sec</td>
                         <td>
                             <span th:if="${attempt.passed}" class="badge badge-success">Passed ✓</span>
-                            <span th:if="${attempt.completed and !attempt.passed}" class="badge badge-danger">Failed</span>
+                            <span th:if="${attempt.completed and !attempt.passed}"
+                                class="badge badge-danger">Failed</span>
                             <span th:if="${!attempt.completed}" class="badge badge-warning">In Progress</span>
                         </td>
                         <td th:text="${#temporals.format(attempt.startedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</td>
                         <td>
-                            <a th:if="${attempt.completed}" th:href="@{/student/quiz/{id}/results(id=${attempt.id})}" class="btn btn-secondary">View Results</a>
-                            <a th:unless="${attempt.completed}" th:href="@{/student/quiz/{id}(id=${attempt.id})}" class="btn btn-primary">Continue</a>
+                            <a th:if="${attempt.completed}" th:href="@{/student/quiz/{id}/results(id=${attempt.id})}"
+                                class="btn btn-secondary">View Results</a>
+                            <a th:unless="${attempt.completed}" th:href="@{/student/quiz/{id}(id=${attempt.id})}"
+                                class="btn btn-primary">Continue</a>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
-        
+
         <a th:href="@{/student/courses}" class="btn btn-secondary" style="margin: 1rem 0;">Back to Courses</a>
     </div>
 </body>
+
 </html>

@@ -18,20 +18,21 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Spring Security configuration
  * Implements strict role-based access control
+ * Allows public student registration
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
-    
+
     private final CustomUserDetailsService userDetailsService;
-    
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    
+
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -39,53 +40,47 @@ public class SecurityConfig {
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
-    
+
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-    
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests(authorize -> authorize
-                // Public resources
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/h2-console/**").permitAll()
-                .requestMatchers("/login", "/error").permitAll()
-                
-                // Administrator-only endpoints
-                .requestMatchers("/admin/**").hasRole("ADMINISTRATOR")
-                
-                // Student-only endpoints
-                .requestMatchers("/student/**").hasRole("STUDENT")
-                
-                // All other requests require authentication
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .defaultSuccessUrl("/", true)
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/login?logout")
-                .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID")
-                .permitAll()
-            )
-            .exceptionHandling(exception -> exception
-                .accessDeniedPage("/access-denied")
-            );
-        
+                .authorizeHttpRequests(authorize -> authorize
+                        // Public resources
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/h2-console/**").permitAll()
+                        .requestMatchers("/login", "/register", "/error").permitAll()
+
+                        // Administrator-only endpoints
+                        .requestMatchers("/admin/**").hasRole("ADMINISTRATOR")
+
+                        // Student-only endpoints
+                        .requestMatchers("/student/**").hasRole("STUDENT")
+
+                        // All other requests require authentication
+                        .anyRequest().authenticated())
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/", true)
+                        .permitAll())
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll())
+                .exceptionHandling(exception -> exception
+                        .accessDeniedPage("/access-denied"));
+
         // H2 Console configuration (development only)
         http.csrf(csrf -> csrf
-            .ignoringRequestMatchers("/h2-console/**")
-        );
+                .ignoringRequestMatchers("/h2-console/**"));
         http.headers(headers -> headers
-            .frameOptions(frame -> frame.sameOrigin())
-        );
-        
+                .frameOptions(frame -> frame.sameOrigin()));
+
         return http.build();
     }
 }

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout :: head(title='Student Registration')}"></head>
+
+<body>
+    <div class="container" style="max-width: 500px; margin-top: 5rem;">
+        <div class="card">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="color: #667eea; margin-bottom: 0.5rem;">🎓 Student Registration</h1>
+                <p style="color: #6b7280;">Create your account to start learning</p>
+            </div>
+
+            <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+            <form th:action="@{/register}" method="post" th:object="${registrationDTO}">
+                <div class="form-group">
+                    <label for="username">Username *</label>
+                    <input type="text" id="username" th:field="*{username}" class="form-control"
+                        placeholder="Choose a username" required>
+                    <div th:if="${#fields.hasErrors('username')}" class="text-danger" th:errors="*{username}">Username
+                        error</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="fullName">Full Name *</label>
+                    <input type="text" id="fullName" th:field="*{fullName}" class="form-control"
+                        placeholder="Enter your full name" required>
+                    <div th:if="${#fields.hasErrors('fullName')}" class="text-danger" th:errors="*{fullName}">Full name
+                        error</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" th:field="*{email}" class="form-control"
+                        placeholder="your.email@example.com" required>
+                    <div th:if="${#fields.hasErrors('email')}" class="text-danger" th:errors="*{email}">Email error
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password *</label>
+                    <input type="password" id="password" th:field="*{password}" class="form-control"
+                        placeholder="Create a password" required>
+                    <div th:if="${#fields.hasErrors('password')}" class="text-danger" th:errors="*{password}">Password
+                        error</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password *</label>
+                    <input type="password" id="confirmPassword" th:field="*{confirmPassword}" class="form-control"
+                        placeholder="Confirm your password" required>
+                    <div th:if="${#fields.hasErrors('confirmPassword')}" class="text-danger"
+                        th:errors="*{confirmPassword}">Confirm password error</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                    Create Account
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                <p style="color: #6b7280; margin-bottom: 0.5rem;">Already have an account?</p>
+                <a th:href="@{/login}" class="btn btn-secondary" style="width: 100%;">Login</a>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <a th:href="@{/}" style="color: #667eea;">← Back to Home</a>
+        </div>
+    </div>
+
+    <style>
+        .text-danger {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+</body>
+
+</html>
